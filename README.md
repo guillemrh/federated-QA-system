@@ -1,1 +1,109 @@
-# federated-QA-system
+# 🧠 Federated QA System
+
+A modular, multi-node architecture for question-answering over distributed corpora, built to explore semantic routing, information retrieval with vector databases, and LLM-powered answer synthesis.
+
+---
+
+## 🚀 Objective
+
+To build a federated question-answering system in which information is split across independent nodes (each with their own corpus and semantic index). When a question is asked, it is intelligently routed to the most relevant nodes. Each node answers based on its internal knowledge, and the system aggregates the results.
+
+This project is meant as a personal portfolio to deepen my skills in:
+
+- NLP: vector embeddings, chunking, retrieval, semantic routing
+- Systems architecture: microservices, containerization, scalability
+- LLM orchestration and prompt engineering
+- Distributed systems reasoning and design
+
+---
+
+## 🧭 Project Overview
+
+The system is built in 3 phases, gradually increasing complexity and modularity:
+
+| Phase | Description |
+|-------|-------------|
+| **Phase 1** | Single-node QA over one corpus with retrieval + LLM answering |
+| **Phase 2** | Multiple independent nodes, each with its own corpus, responding in parallel |
+| **Phase 3** | Semantic router that selects the most relevant node(s) based on the query content |
+
+---
+
+## 📁 Project Structure
+```
+qa-federated/
+├── app/ # Core FastAPI app and QA engine logic
+├── data/ # Corpus files for different domains (e.g. legal, tech)
+├── models/ # Local storage for vector DBs
+├── scripts/ # Indexing, ingestion, preprocessing
+├── notebooks/ # Experiments and debugging
+├── tests/ # Unit/integration tests
+├── docker-compose.yml
+├── Dockerfile
+├── .env
+└── README.md
+```
+
+---
+
+## 📦 Core Features (MVP & Beyond)
+
+- [ ] Basic document ingestion and chunking
+- [ ] Vector indexing with FAISS or ChromaDB
+- [ ] Simple QA over one corpus (single node)
+- [ ] API endpoint: `/ask` with question input
+- [ ] Answer generation via OpenAI or local LLM
+- [ ] Corpus modularity (easily add/remove domains)
+- [ ] Multi-node setup (each corpus isolated)
+- [ ] Semantic query routing (Phase 3)
+- [ ] Answer aggregation from multiple nodes
+- [ ] Docker-based environment setup
+
+---
+
+## 🔧 Potential Enhancements & Learning Challenges
+
+Here’s a curated set of optional features to expand and deepen the system. Each one adds unique technical and learning value:
+
+### 🧪 Retrieval & NLP
+- [ ] Compare different embedding models (e.g. `E5`, `Instructor`, `LegalBERT`)
+- [ ] Chunk overlap vs non-overlap analysis
+- [ ] Implement reranking of retrieved chunks using a cross-encoder
+- [ ] Create an interface to visualize vector distances between queries and docs
+
+### 🧠 LLM Interaction
+- [ ] Prompt templates per domain
+- [ ] Let nodes use different LLMs (e.g. OpenAI vs `llama3` via Ollama)
+- [ ] Add conversational memory (simple history tracking)
+- [ ] Create synthetic questions to evaluate answer quality
+
+### 🌐 System Design
+- [ ] Load balancing across nodes
+- [ ] Streaming answers from multiple nodes (partial responses)
+- [ ] Circuit breakers or fallbacks when nodes fail
+- [ ] Semantic summarization of each corpus for efficient routing
+
+### 🔐 Data Privacy / Ethics
+- [ ] Node-level access control
+- [ ] Fully local setup (no external APIs) for confidential corpora
+- [ ] Detect hallucinations and annotate low-confidence answers
+
+---
+
+## 🧩 Future Ideas
+
+- Create a CLI tool to interact with the system
+- Add a basic dashboard for monitoring node responses
+- Plug in LangChain/RAG pipelines to benchmark performance
+- Adapt this system to work on multilingual corpora with routing by language
+
+---
+
+## 📚 What I aim
+
+This project is not only about building something that works, but also about **growing as an engineer**. I want to:
+
+- Reason about distributed systems and separation of concerns
+- Learn to optimize semantic search pipelines
+- Understand how to design modular, scalable AI services
+- Practice debugging and maintaining multi-service environments
