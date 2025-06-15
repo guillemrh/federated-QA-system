@@ -31,17 +31,37 @@ The system is built in 3 phases, gradually increasing complexity and modularity:
 
 ## 📁 Project Structure
 ```
-qa-federated/
-├── app/ # Core FastAPI app and QA engine logic
-├── data/ # Corpus files for different domains (e.g. legal, tech)
-├── models/ # Local storage for vector DBs
-├── scripts/ # Indexing, ingestion, preprocessing
-├── notebooks/ # Experiments and debugging
-├── tests/ # Unit/integration tests
-├── docker-compose.yml
-├── Dockerfile
-├── .env
-└── README.md
+orchestrator/
+├── endpoints.py         # FastAPI endpoints (e.g. /ask)
+├── service.py           # Logic to route query to nodes and aggregate
+├── models.py            # Pydantic models for requests/responses
+├── config.py            # Node URLs, env vars
+├── main.py              # FastAPI app runner
+└── tests/
+    └── test_service.py
+
+legal_node/
+├── endpoints.py         # /ask endpoint for this node
+├── service.py           # Node-specific retrieval and response logic
+├── models.py            # Input/output models (Pydantic)
+├── config.py
+├── main.py              # FastAPI app
+└── tests/
+    └── test_service.py
+
+finance_node/
+└── (same structure as legal_node)
+
+shared/
+├── base_node.py         # Abstract base node class
+├── utils.py             # General helpers
+└── generics/
+    └── preprocessing.py # Optional: text cleaning, splitting, etc.
+
+docker-compose.yml       # Defines all services (orchestrator + nodes)
+Dockerfile               # Base image for nodes and orchestrator
+requirements.txt         # Common Python dependencies
+README.md
 ```
 
 ---
