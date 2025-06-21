@@ -1,0 +1,22 @@
+services:
+  legal_node:
+    build:
+      context: .
+    command: uvicorn legal_node.main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    restart: always
+
+  orchestrator:
+    build:
+      context: .
+    command: uvicorn orchestrator.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - legal_node
+    restart: always
