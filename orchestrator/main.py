@@ -3,34 +3,68 @@ import requests
 import time
 from shared.models import AskRequest, AskResponse
 from fastapi import Body
+from typing import List
 
-
+    
 app = FastAPI()
+urls = {
+    "legal_node":"http://legal_node:8001/ask",
+    "finance_node":"http://finance_node:8002/ask"
+}
+
+def route_question(question: str) -> List[str]:
+    """
+    Reroute the question to the appropriate nodes based on the question content.
+    This is a placeholder function that should contain logic to determine which nodes to query.
+    """
+    keywords = {
+        "legal_node": ["law", "legal", "regulation", "compliance","GDPR", "privacy", "contract", "agreement"],
+        "finance_node": ["finance", "financial", "investment", "accounting", "tax", "budget", "cost", "revenue"]
+    }
+    selected_nodes = []
+    q_lower = question.lower()
+    for node, keys in keywords.items():
+        if any(key in q_lower for key in keys):
+            selected_nodes.append(node)
+    
+    return selected_nodes or list(urls.keys())  # Default to all nodes if no keywords match
 
 # Endpoint que puedes consultar desde fuera
 @app.get("/healthcheck")
-def check_legal_node():
-    url = "http://legal_node:8001/ask"
-    for _ in range(10):
-        try:
-            r = requests.post(url, json={"question": "Test"})
-            if r.status_code == 200:
-                return {"status": "Legal node is up!"}
-        except Exception as e:
-            print(f"Waiting for legal_node: {e}")
-            time.sleep(2)
-    return {"status": "Legal node unavailable"}
+def check_all_nodes():
+    for node_name, url in urls.items():
+        for _ in range(10):
+            try:
+                r = requests.post(url, json={"question": "Test"})
+                if r.status_code == 200:
+                    return {"status": f"{node_name} node is up!"}
+            except Exception as e:
+                print(f"Waiting for {node_name}: {e}")
+                time.sleep(2)
+        return {"status": f"{node_name} node unavailable"}
 
 
-@app.post("/ask", response_model=AskResponse)
-def ask_legal_node(req: AskRequest = Body(...)):
-    try:
-        response = requests.post(
-            "http://legal_node:8001/ask",
-            json=req.dict()
-        )
-        data = response.json()
-        return {"answer": data["answer"]}
-    except Exception as e:
-        return {"answer": f"Error: {e}"}
+@app.post("/ask", response_model=List[AskResponse])
+def ask_all_nodes(req: AskRequest = Body(...)):
+    responses = []
+
+    for node in route_question(req.question):
+        if node in urls:
+            url = urls[node]
+            print(f"Sending request to {url} with question: {req.question}")
+            try:
+                response = requests.post(url, json=req.dict())
+                data = response.json()
+                data["node_id"] = node  # Add node identifier to response
+                responses.append(data)
+            except Exception as e:
+                print(f"Failed to get response from {node}: {e}")
+                responses.append(AskResponse(
+                    answer=f"Error from {node}: {e}",
+                    confidence=0.0,
+                    sources=[],
+                    node_id=node,
+                    status="error"
+                ))
+    return responses
 

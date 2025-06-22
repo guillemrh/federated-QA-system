@@ -8,7 +8,7 @@ def answer_question(question: str) -> AskResponse:
     )
 
     response = AskResponse(
-        answer="This is the law.",
+        answer="This is legal!",
         confidence=1.0,
         sources=[source],
         node_id="legal_node",
