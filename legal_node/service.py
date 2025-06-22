@@ -1,4 +1,4 @@
-from .models import Source, AskResponse
+from shared.models import Source, AskResponse
 
 def answer_question(question: str) -> AskResponse:
     source = Source(

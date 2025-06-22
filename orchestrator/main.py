@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 import requests
 import time
+from shared.models import AskRequest, AskResponse
+from fastapi import Body
+
 
 app = FastAPI()
 
@@ -19,14 +22,15 @@ def check_legal_node():
     return {"status": "Legal node unavailable"}
 
 
-@app.post("/ask")
-def ask_legal_node():
+@app.post("/ask", response_model=AskResponse)
+def ask_legal_node(req: AskRequest = Body(...)):
     try:
         response = requests.post(
             "http://legal_node:8001/ask",
-            json={"question": "What are the legal risks of X?"}
+            json=req.dict()
         )
         data = response.json()
         return {"answer": data["answer"]}
     except Exception as e:
-        return {"error": str(e)}
+        return {"answer": f"Error: {e}"}
+

@@ -66,18 +66,28 @@ README.md
 
 ---
 
-## 📦 Core Features (MVP & Beyond)
+### 📦 Core Features – MVP & Beyond
 
-- [ ] Basic document ingestion and chunking
-- [ ] Vector indexing with FAISS or ChromaDB
-- [ ] Simple QA over one corpus (single node)
-- [ ] API endpoint: `/ask` with question input
-- [ ] Answer generation via OpenAI or local LLM
-- [ ] Corpus modularity (easily add/remove domains)
-- [ ] Multi-node setup (each corpus isolated)
-- [ ] Semantic query routing (Phase 3)
-- [ ] Answer aggregation from multiple nodes
-- [ ] Docker-based environment setup
+#### ✅ Phase 1: Foundational System Setup
+- [x] Docker-based environment setup (Orchestrator + Nodes)
+- [x] API endpoint: `/ask` with question input (at node level)
+- [x] Answer generation via OpenAI or local LLM (stub for now)
+- [x] Multi-node system scaffold (orchestrator → node calls)
+- [x] Healthcheck endpoint for orchestrator + nodes
+- [x] Basic unit + integration tests using `pytest`
+
+#### 🚧 Phase 2: Corpus and Node Expansion
+- [ ] Basic document ingestion and chunking per domain
+- [ ] Vector indexing (e.g. FAISS or ChromaDB)
+- [ ] QA over one corpus (retrieval + generation)
+- [ ] Add second node (e.g. `finance_node`)
+- [ ] Route queries to correct node via orchestrator
+- [ ] Modular corpus structure (plug & play domains)
+
+#### 🔮 Phase 3: Federated Semantic Intelligence
+- [ ] Semantic query routing (embedding + classification)
+- [ ] Aggregated answers from multiple nodes
+- [ ] Confidence scoring or provenance metadata per answer
 
 ---
 
