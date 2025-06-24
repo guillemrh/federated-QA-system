@@ -34,7 +34,6 @@ The system is built in 3 phases, gradually increasing complexity and modularity:
 orchestrator/
 ├── endpoints.py         # FastAPI endpoints (e.g. /ask)
 ├── service.py           # Logic to route query to nodes and aggregate
-├── models.py            # Pydantic models for requests/responses
 ├── config.py            # Node URLs, env vars
 ├── main.py              # FastAPI app runner
 └── tests/
@@ -43,7 +42,6 @@ orchestrator/
 legal_node/
 ├── endpoints.py         # /ask endpoint for this node
 ├── service.py           # Node-specific retrieval and response logic
-├── models.py            # Input/output models (Pydantic)
 ├── config.py
 ├── main.py              # FastAPI app
 └── tests/
@@ -54,6 +52,7 @@ finance_node/
 
 shared/
 ├── base_node.py         # Abstract base node class
+├── models.py
 ├── utils.py             # General helpers
 └── generics/
     └── preprocessing.py # Optional: text cleaning, splitting, etc.
@@ -80,8 +79,8 @@ README.md
 - [ ] Basic document ingestion and chunking per domain
 - [ ] Vector indexing (e.g. FAISS or ChromaDB)
 - [ ] QA over one corpus (retrieval + generation)
-- [ ] Add second node (e.g. `finance_node`)
-- [ ] Route queries to correct node via orchestrator
+- [x] Add second node (e.g. `finance_node`)
+- [x] Route queries to correct node via orchestrator
 - [ ] Modular corpus structure (plug & play domains)
 
 #### 🔮 Phase 3: Federated Semantic Intelligence

@@ -5,13 +5,15 @@ from shared.models import AskRequest, AskResponse
 from fastapi import Body
 from typing import List
 
-    
+
 app = FastAPI()
 urls = {
     "legal_node":"http://legal_node:8001/ask",
     "finance_node":"http://finance_node:8002/ask"
 }
 
+# Function to route questions to appropriate nodes based on keywords
+# This function can be extended to include more complex routing logic as needed.
 def route_question(question: str) -> List[str]:
     """
     Reroute the question to the appropriate nodes based on the question content.
@@ -29,7 +31,7 @@ def route_question(question: str) -> List[str]:
     
     return selected_nodes or list(urls.keys())  # Default to all nodes if no keywords match
 
-# Endpoint que puedes consultar desde fuera
+# Health check endpoint to ensure all nodes are reachable
 @app.get("/healthcheck")
 def check_all_nodes():
     for node_name, url in urls.items():
@@ -43,7 +45,7 @@ def check_all_nodes():
                 time.sleep(2)
         return {"status": f"{node_name} node unavailable"}
 
-
+# Endpoint to ask questions to all nodes
 @app.post("/ask", response_model=List[AskResponse])
 def ask_all_nodes(req: AskRequest = Body(...)):
     responses = []
