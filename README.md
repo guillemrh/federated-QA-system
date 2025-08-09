@@ -76,9 +76,9 @@ README.md
 - [x] Basic unit + integration tests using `pytest`
 
 #### 🚧 Phase 2: Corpus and Node Expansion
-- [ ] Basic document ingestion and chunking per domain
+- [x] Basic document ingestion and chunking per domain
 - [ ] Vector indexing (e.g. FAISS or ChromaDB)
-- [ ] QA over one corpus (retrieval + generation)
+- [x] QA over one corpus (retrieval + generation)
 - [x] Add second node (e.g. `finance_node`)
 - [x] Route queries to correct node via orchestrator
 - [ ] Modular corpus structure (plug & play domains)

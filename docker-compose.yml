@@ -7,6 +7,8 @@ services:
       - "8001:8001"
     volumes:
       - .:/app
+    env_file:
+      - .env    
     restart: always
 
   finance_node:
@@ -17,6 +19,8 @@ services:
       - "8002:8002"
     volumes:
       - .:/app
+    env_file:
+      - .env    
     restart: always  
 
   orchestrator:
@@ -27,6 +31,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
+    env_file:
+      - .env  
     depends_on:
       - legal_node
       - finance_node
