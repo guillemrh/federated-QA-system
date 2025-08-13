@@ -4,15 +4,21 @@ from sentence_transformers import SentenceTransformer
 import faiss
 from typing import List
 import time
+from shared.data_loader import load_text_chunks
+from shared.config import TRANSFORMER_MODEL
+import os
 
-# Example document chunks (in real case: read from file + chunk)
-text_chunks = [
-    "Processed lawfully, fairly and in a transparent manner in relation to the data subject.",
-    "Collected for specified, explicit and legitimate purposes and not further processed in a manner that is incompatible with those purposes."
-]
+DIR_DATA = os.path.join(os.path.dirname(__file__), "data")
+
+# Load text chunks from the specified directory
+if not os.path.exists(DIR_DATA):
+    raise FileNotFoundError(f"Data directory {DIR_DATA} does not exist.")
+text_chunks = load_text_chunks(DIR_DATA)
+if not text_chunks:
+    raise ValueError("No text chunks found in the specified directory.")
 
 # Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer(TRANSFORMER_MODEL)
 
 # Encode + store vectors
 embeddings = model.encode(text_chunks).astype('float32')

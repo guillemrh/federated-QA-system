@@ -35,8 +35,7 @@ Answer in clear, accurate legal language."""
     sources=[
         Source(
             name="Stub source (to be replaced by real doc metadata)",
-            url="https://gdpr-info.eu/art-6-gdpr/",
-            snippet=chunks[0] if chunks else "No context found."
+            url="https://gdpr-info.eu/art-6-gdpr/"
         )
     ],
     node_id="legal_node",
