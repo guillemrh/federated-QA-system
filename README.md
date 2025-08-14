@@ -6,7 +6,7 @@ A modular, multi-node architecture for question-answering over distributed corpo
 
 ## 🚀 Objective
 
-To build a federated question-answering system in which information is split across independent nodes (each with their own corpus and semantic index). When a question is asked, it is intelligently routed to the most relevant nodes. Each node answers based on its internal knowledge, and the system aggregates the results.
+Build a federated question-answering system in which information is split across independent nodes (each with their own corpus and semantic index). When a question is asked, it is intelligently routed by a central orchestrator node to the most relevant nodes. Each node answers based on its internal knowledge, and the orchestrator aggregates the results.
 
 This project is meant as a personal portfolio to deepen my skills in:
 
@@ -19,13 +19,15 @@ This project is meant as a personal portfolio to deepen my skills in:
 
 ## 🧭 Project Overview
 
-The system is built in 3 phases, gradually increasing complexity and modularity:
+The MVP is built in 3 phases, gradually increasing complexity and modularity:
 
-| Phase | Description |
-|-------|-------------|
-| **Phase 1** | Single-node QA over one corpus with retrieval + LLM answering |
-| **Phase 2** | Multiple independent nodes, each with its own corpus, responding in parallel |
-| **Phase 3** | Semantic router that selects the most relevant node(s) based on the query content |
+| Phase | Description | Status |
+|-------|-------------|--------|
+| **Phase 1** | Single-node QA over one corpus with retrieval + LLM answering | ✅ Done
+| **Phase 2** | Multiple independent nodes, each with its own corpus, responding in parallel | ✅ Done
+| **Phase 3** | Semantic router that selects the most relevant node(s) based on the query content | 🚧 In progress
+
+After completion of the MVP, I will start enhancing the system (see below, stretch goals & potential enhancements section)
 
 ---
 
@@ -34,17 +36,16 @@ The system is built in 3 phases, gradually increasing complexity and modularity:
 orchestrator/
 ├── endpoints.py         # FastAPI endpoints (e.g. /ask)
 ├── service.py           # Logic to route query to nodes and aggregate
-├── models.py            # Pydantic models for requests/responses
 ├── config.py            # Node URLs, env vars
 ├── main.py              # FastAPI app runner
 └── tests/
     └── test_service.py
 
 legal_node/
+├── data/  
 ├── endpoints.py         # /ask endpoint for this node
-├── service.py           # Node-specific retrieval and response logic
-├── models.py            # Input/output models (Pydantic)
-├── config.py
+├── service.py           # Retrieval + LLM answer composition
+├── retriever.py         # Node-specific retrieval wrapper
 ├── main.py              # FastAPI app
 └── tests/
     └── test_service.py
@@ -53,11 +54,12 @@ finance_node/
 └── (same structure as legal_node)
 
 shared/
-├── base_node.py         # Abstract base node class
-├── utils.py             # General helpers
-└── generics/
-    └── preprocessing.py # Optional: text cleaning, splitting, etc.
+├── models.py         # Abstract base node class
+├── config.py         # Global config (model names, env vars)
+├── data_loader.py    # Chunk loading logic
+└── retriever.py      # Reusable FAISS retriever
 
+.env                     # Store variables
 docker-compose.yml       # Defines all services (orchestrator + nodes)
 Dockerfile               # Base image for nodes and orchestrator
 requirements.txt         # Common Python dependencies
@@ -65,19 +67,40 @@ README.md
 ```
 
 ---
+## ✅ Current Features
 
-## 📦 Core Features (MVP & Beyond)
+- **Dockerized** orchestrator and nodes for easy multi-service spin-up
+- **Local FAISS vector store** for each node
+- **Reusable retriever class** for document loading, embedding, and search
+- **Domain isolation** (each node has its own model + data)
+- **Simple retrieval-based QA** with OpenAI or local LLMs
+- **Extensible node structure** for quick domain additions
 
-- [ ] Basic document ingestion and chunking
-- [ ] Vector indexing with FAISS or ChromaDB
-- [ ] Simple QA over one corpus (single node)
-- [ ] API endpoint: `/ask` with question input
-- [ ] Answer generation via OpenAI or local LLM
-- [ ] Corpus modularity (easily add/remove domains)
-- [ ] Multi-node setup (each corpus isolated)
-- [ ] Semantic query routing (Phase 3)
-- [ ] Answer aggregation from multiple nodes
-- [ ] Docker-based environment setup
+---
+
+## 🚧 Next Milestones
+
+### Short-term (Phase 3 Completion)
+- [ ] Add **Finance Node** with same retriever structure as Legal Node
+- [ ] Implement **semantic router** in orchestrator
+- [ ] Aggregate results from multiple nodes with confidence scores
+- [ ] Node metadata in responses (source, distances, etc.)
+
+### Medium-term
+- [ ] Automated **unit + integration testing** with `pytest`
+- [ ] CLI tool for local queries
+- [ ] Corpus ingestion pipeline (drag-and-drop files into node)
+- [ ] Compare embedding models (`all-MiniLM-L6-v2` vs domain-specific)
+
+### Stretch Goals
+- [ ] **Dashboard** showing:
+  - Node hit rate
+  - Retrieval distances
+  - Latency per request
+- [ ] **Fine-tune an embedding model** on domain-specific Q/A pairs
+- [ ] **Cross-encoder reranking** for improved retrieval accuracy
+- [ ] **Streaming aggregation** (partial answers from multiple nodes in real-time)
+- [ ] Multilingual routing + answering
 
 ---
 
@@ -93,7 +116,7 @@ Here’s a curated set of optional features to expand and deepen the system. Eac
 
 ### 🧠 LLM Interaction
 - [ ] Prompt templates per domain
-- [ ] Let nodes use different LLMs (e.g. OpenAI vs `llama3` via Ollama)
+- [ ] Let nodes use different LLMs (e.g. Gemini vs `llama3` via Ollama)
 - [ ] Add conversational memory (simple history tracking)
 - [ ] Create synthetic questions to evaluate answer quality
 
