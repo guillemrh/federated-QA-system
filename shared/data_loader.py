@@ -22,6 +22,10 @@ def load_text_chunks(DATA_DIR: str, chunk_size: int=500) -> list:
                 # Simple chunking by words
                 words = text.split()
                 for i in range(0, len(words), chunk_size):
-                    chunk = " ".join(words[i:i+chunk_size])
-                    chunks.append(chunk)
+                    chunk_text = " ".join(words[i:i+chunk_size])
+                    # Return a dictionary with text and source (metadata)
+                    chunks.append({
+                        "text": chunk_text,
+                        "source": filename
+                    })
     return chunks

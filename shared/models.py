@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Dict, Literal
+from typing import List, Dict, Literal, Optional
 
 class AskRequest(BaseModel):
     question: str
@@ -8,7 +8,7 @@ class AskRequest(BaseModel):
 class Source(BaseModel):
     name: str
     url: str
-    snippet: str  # Breve fragmento del contenido relacionado
+    snippet: str
 
 class AskResponse(BaseModel):
     answer: str

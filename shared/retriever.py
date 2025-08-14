@@ -2,7 +2,7 @@ import os
 import faiss
 from sentence_transformers import SentenceTransformer
 from shared.data_loader import load_text_chunks
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
 class Retriever:
@@ -18,7 +18,7 @@ class Retriever:
         """
         self.data_dir = data_dir
         self.model_name = model_name
-        self.text_chunks: List[str] = []
+        self.text_chunks: List[Dict[str, str]] = []
         self.model: SentenceTransformer = None
         self.index: faiss.IndexFlatL2 = None
 
@@ -48,24 +48,28 @@ class Retriever:
             raise ValueError("Text chunks not loaded. Call load_text() first.")
         if self.model is None:
             raise ValueError("Model not loaded. Call load_model() first.")
-
-        embeddings = self.model.encode(self.text_chunks).astype('float32')
+        
+        texts = [chunk["text"] for chunk in self.text_chunks] # Extract text from chunks (list of dicts with "text" key)
+        embeddings = self.model.encode(texts).astype('float32')
         self.index = faiss.IndexFlatL2(embeddings.shape[1])
         self.index.add(embeddings)
 
         print(f"FAISS index created with {self.index.ntotal} chunks.")
         return self
 
-    def search(self, query: str, k: int = 2, return_distances: bool = True) -> Tuple[List[float], List[str]]:
+    def search(self, query: str, k: int = 2, return_distances: bool = True) -> Tuple[List[float], List[Dict[str, str]]]:
         """
         Search the FAISS index for the top k results for a given query.
         """
         if self.index is None:
             raise ValueError("Index not built. Call build_index() first.")
+        
+        # Adjust k to not exceed available chunks
+        k = min(k, len(self.text_chunks))
 
         query_embedding = self.model.encode([query]).astype('float32')
         distances, indices = self.index.search(query_embedding, k)
 
         results = [self.text_chunks[idx] for idx in indices[0]]
 
-        return (distances[0], results) if return_distances else results
+        return (distances[0], results) if return_distances else (None, results)
