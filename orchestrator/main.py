@@ -4,6 +4,8 @@ import time
 from shared.models import AskRequest, AskResponse
 from fastapi import Body
 from typing import List
+import numpy as np
+from sentence_transformers import SentenceTransformer
 
 
 app = FastAPI()
@@ -12,24 +14,46 @@ urls = {
     "finance_node":"http://finance_node:8002/ask"
 }
 
-# Function to route questions to appropriate nodes based on keywords
+NODE_TOPICS = {
+    "legal_node": "Laws, regulations, compliance, GDPR, contracts, privacy",
+    "finance_node": "Finance, investment, accounting, tax, budgets, revenues"
+}
+
+MODEL_NAME = "all-MiniLM-L6-v2" 
+router_model = SentenceTransformer(MODEL_NAME)
+
+# Precompute topic embeddings
+node_embeddings = {
+    node: router_model.encode(topic, normalize_embeddings=True)
+    for node, topic in NODE_TOPICS.items()
+}
+
+# Function to route questions to appropriate nodes
 # This function can be extended to include more complex routing logic as needed.
-def route_question(question: str) -> List[str]:
+def route_question(question: str, top_k: int = 2, threshold: float = 0.2):
     """
-    Reroute the question to the appropriate nodes based on the question content.
-    This is a placeholder function that should contain logic to determine which nodes to query.
+    Select the most relevant nodes for a query using semantic similarity.
     """
-    keywords = {
-        "legal_node": ["law", "legal", "regulation", "compliance","GDPR", "privacy", "contract", "agreement"],
-        "finance_node": ["finance", "financial", "investment", "accounting", "tax", "budget", "cost", "revenue"]
+    query_emb = router_model.encode(question, normalize_embeddings=True)
+
+    similarities = {
+        node: float(np.dot(query_emb, emb))  # cosine similarity
+        for node, emb in node_embeddings.items()
     }
-    selected_nodes = []
-    q_lower = question.lower()
-    for node, keys in keywords.items():
-        if any(key in q_lower for key in keys):
-            selected_nodes.append(node)
     
-    return selected_nodes or list(urls.keys())  # Default to all nodes if no keywords match
+    print("Similarity scores:", similarities)
+
+    # Sort by similarity
+    ranked_nodes = sorted(similarities.items(), key=lambda x: x[1], reverse=True)
+
+    # Filter by threshold
+    selected = [node for node, score in ranked_nodes if score >= threshold]
+
+    # If nothing passes threshold, pick top_k
+    if not selected:
+        selected = [node for node, _ in ranked_nodes[:top_k]]
+
+    return selected
 
 # Health check endpoint to ensure all nodes are reachable
 @app.get("/healthcheck")

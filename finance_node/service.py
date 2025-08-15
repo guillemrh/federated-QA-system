@@ -1,18 +1,60 @@
-from shared.models import Source, AskResponse
+from .retriever import retrieve_relevant_chunks
+from shared.models import AskResponse, Source
+import os
+from shared.config import GOOGLE_API_KEY
+import google.generativeai as genai
+
+# Initialize Google Generative AI with the API key and choose the model
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
 
 def answer_question(question: str) -> AskResponse:
-    source = Source(
-        name="Savings and Investment",
-        url="https://finance.ec.europa.eu/index_en",
-        snippet="The savings and investments union (SIU) aims to create better financial opportunities for EU citizens, while enhancing our financial system’s capability to connect savings..."
-    )
+    """
+    Use the retriever to get relevant chunks, pass them to the LLM,
+    and return a structured AskResponse.
+    """
+    # Retrieve context
+    chunks = retrieve_relevant_chunks(question)
+    
+    # Build context string from chunk texts
+    context = "\n\n".join(chunk["text"] for chunk in chunks)
+    
+    print("Chunks returned:", chunks)
+    print("Type of chunks[0]:", type(chunks[0]))
 
-    response = AskResponse(
-        answer="This is financial law",
-        confidence=1.0,
-        sources=[source],
-        node_id="financial_node",
-        status="success"
-    )
+    # Build prompt for the LLM
+    prompt = f"""You are a finance assistant. Use the following financial context to answer the user's question.
 
-    return response
+Context:
+{context}
+
+Question:
+{question}
+
+Answer in clear, accurate financial language."""
+
+    try: 
+        # Generate the response
+        response = model.generate_content(prompt)
+        # Extract the answer text from the response
+        answer_text = response.text
+    except Exception as e:
+        answer_text = f"Error generating response: {str(e)}"
+    
+    # Build sources dynamically
+    sources=[
+        Source(
+            name=chunk["source"],
+            url=f"https://finance.ec.europa.eu//{chunk['source']}", # Needs to be updated with actual source URLs
+            snippet=chunk["text"][:200]  # Use the first 200 characters as a snippet
+        )
+        for chunk in chunks
+    ]
+    
+    return AskResponse(
+    answer=answer_text,
+    confidence=0.9,
+    sources=sources,
+    node_id="finance_node",
+    status="success"
+    )

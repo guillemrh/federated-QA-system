@@ -46,7 +46,7 @@ Answer in clear, accurate legal language."""
         Source(
             name=chunk["source"],
             url=f"https://gdpr-info.eu/{chunk['source']}",
-            snippet=chunk["text"][:100]  # Use the first 100 characters as a snippet
+            snippet=chunk["text"][:200]  # Use the first 200 characters as a snippet
         )
         for chunk in chunks
     ]
