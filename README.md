@@ -25,7 +25,7 @@ The MVP is built in 3 phases, gradually increasing complexity and modularity:
 |-------|-------------|--------|
 | **Phase 1** | Single-node QA over one corpus with retrieval + LLM answering | ✅ Done
 | **Phase 2** | Multiple independent nodes, each with its own corpus, responding in parallel | ✅ Done
-| **Phase 3** | Semantic router that selects the most relevant node(s) based on the query content | 🚧 In progress
+| **Phase 3** | Semantic router that selects the most relevant node(s) based on the query content | ✅ Done
 
 After completion of the MVP, I will start enhancing the system (see below, stretch goals & potential enhancements section)
 
@@ -81,26 +81,10 @@ README.md
 ## 🚧 Next Milestones
 
 ### Short-term (Phase 3 Completion)
-- [ ] Add **Finance Node** with same retriever structure as Legal Node
-- [ ] Implement **semantic router** in orchestrator
-- [ ] Aggregate results from multiple nodes with confidence scores
+- [x] Add **Finance Node** with same retriever structure as Legal Node
+- [x] Implement **semantic router** in orchestrator
+- [x] Aggregate results from multiple nodes with confidence scores
 - [ ] Node metadata in responses (source, distances, etc.)
-
-### Medium-term
-- [ ] Automated **unit + integration testing** with `pytest`
-- [ ] CLI tool for local queries
-- [ ] Corpus ingestion pipeline (drag-and-drop files into node)
-- [ ] Compare embedding models (`all-MiniLM-L6-v2` vs domain-specific)
-
-### Stretch Goals
-- [ ] **Dashboard** showing:
-  - Node hit rate
-  - Retrieval distances
-  - Latency per request
-- [ ] **Fine-tune an embedding model** on domain-specific Q/A pairs
-- [ ] **Cross-encoder reranking** for improved retrieval accuracy
-- [ ] **Streaming aggregation** (partial answers from multiple nodes in real-time)
-- [ ] Multilingual routing + answering
 
 ---
 
@@ -108,37 +92,39 @@ README.md
 
 Here’s a curated set of optional features to expand and deepen the system. Each one adds unique technical and learning value:
 
-### 🧪 Retrieval & NLP
-- [ ] Compare different embedding models (e.g. `E5`, `Instructor`, `LegalBERT`)
-- [ ] Chunk overlap vs non-overlap analysis
-- [ ] Implement reranking of retrieved chunks using a cross-encoder
-- [ ] Create an interface to visualize vector distances between queries and docs
+### ⚡ Model & Research Innovation
 
-### 🧠 LLM Interaction
-- [ ] Prompt templates per domain
-- [ ] Let nodes use different LLMs (e.g. Gemini vs `llama3` via Ollama)
-- [ ] Add conversational memory (simple history tracking)
-- [ ] Create synthetic questions to evaluate answer quality
+**Goal:** Move beyond relying only on Google’s gemini-1.5-flash-latest. Train, evaluate, and compare models for retrieval-augmented QA system.
 
-### 🌐 System Design
-- [ ] Load balancing across nodes
-- [ ] Streaming answers from multiple nodes (partial responses)
-- [ ] Circuit breakers or fallbacks when nodes fail
-- [ ] Semantic summarization of each corpus for efficient routing
+**Tasks:**
 
-### 🔐 Data Privacy / Ethics
-- [ ] Node-level access control
-- [ ] Fully local setup (no external APIs) for confidential corpora
-- [ ] Detect hallucinations and annotate low-confidence answers
+- [ ] Literature Review: Document how QA/RAG systems compare models (common metrics: F1, BLEU, ROUGE, accuracy, hallucination rate, etc.).
+- [ ] Dataset Creation: Collect or generate a benchmark dataset of legal, finance, and mixed questions.
+- [ ] Train Embedding Model: Sentence-BERT fine-tuned on domain corpora.
+- [ ] Optionally experiment with domain-adapted embeddings.
+- [ ] Evaluation Pipeline: Implement scripts to compare Gemini vs your embedding model vs other local LLMs (Llama, Mistral, etc.).
+- [ ] Log quantitative results (retrieval accuracy, precision@k, latency).
+- [ ] Visualization: Generate charts of model performance over the benchmark dataset.
+- [ ] Stretch Goal: Experiment with training a tiny transformer from scratch on narrow domain data just to showcase feasibility.
 
----
+### 📊 Observability & Reliability
 
-## 🧩 Future Ideas
+**Goal:** Make the system production-grade by adding observability, monitoring, and fault tolerance.
 
-- Create a CLI tool to interact with the system
-- Add a basic dashboard for monitoring node responses
-- Plug in LangChain/RAG pipelines to benchmark performance
-- Adapt this system to work on multilingual corpora with routing by language
+**Tasks:**
+
+- [ ] Tracing (OpenTelemetry): Implement distributed tracing across orchestrator → nodes → aggregator.
+- [ ] Metrics Collection: Expose Prometheus/Grafana metrics: 
+  * Latency per node. 
+  * Error rate.
+  * Node uptime/availability.
+- [ ] Structured Logging: Add JSON logs that include embedding similarity scores, routing decisions, and node responses.
+- [ ] Chaos Mode: Simulate:
+  * Node crashes.
+  * High latency responses.
+  * Node disconnections.
+- [ ] Verify orchestrator handles failures gracefully.
+- [ ] Alerts & SLOs: Define service-level objectives (e.g., “95% of answers within <2s”) and alerts for violations.
 
 ---
 
