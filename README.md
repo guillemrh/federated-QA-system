@@ -59,6 +59,11 @@ shared/
 ├── data_loader.py    # Chunk loading logic
 └── retriever.py      # Reusable FAISS retriever
 
+benchmarks/
+├── dataset.jsonl
+├── evaluator.py
+└── results/
+
 .env                     # Store variables
 docker-compose.yml       # Defines all services (orchestrator + nodes)
 Dockerfile               # Base image for nodes and orchestrator
@@ -98,8 +103,8 @@ Here’s a curated set of optional features to expand and deepen the system. Eac
 
 **Tasks:**
 
-- [ ] Literature Review: Document how QA/RAG systems compare models (common metrics: F1, BLEU, ROUGE, accuracy, hallucination rate, etc.).
-- [ ] Dataset Creation: Collect or generate a benchmark dataset of legal, finance, and mixed questions.
+- [x] Literature Review: Document how QA/RAG systems compare models (common metrics: F1, BLEU, ROUGE, accuracy, hallucination rate, etc.).
+- [x] Dataset Creation: Collect or generate a benchmark dataset of legal, finance, and mixed questions.
 - [ ] Train Embedding Model: Sentence-BERT fine-tuned on domain corpora.
 - [ ] Optionally experiment with domain-adapted embeddings.
 - [ ] Evaluation Pipeline: Implement scripts to compare Gemini vs your embedding model vs other local LLMs (Llama, Mistral, etc.).

@@ -1,12 +1,12 @@
 from .retriever import retrieve_relevant_chunks
 from shared.models import AskResponse, Source
 import os
-from shared.config import GOOGLE_API_KEY
+from shared.config import GOOGLE_API_KEY, GOOGLE_MODEL
 import google.generativeai as genai
 
 # Initialize Google Generative AI with the API key and choose the model
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("models/gemini-1.5-flash-latest")
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel(GOOGLE_MODEL)
 
 def answer_question(question: str) -> AskResponse:
     """

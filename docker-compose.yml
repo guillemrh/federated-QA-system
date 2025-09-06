@@ -37,3 +37,11 @@ services:
       - legal_node
       - finance_node
     restart: always
+  
+  evaluator:
+    build: .
+    command: python benchmarks/evaluator.py
+    volumes:
+      - .:/app
+    depends_on:
+      - orchestrator

@@ -1,46 +1,56 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 import requests
 import time
-from shared.models import AskRequest, AskResponse
-from fastapi import Body
-from typing import List
+from typing import List, Dict
 import numpy as np
 from sentence_transformers import SentenceTransformer
+import google.generativeai as genai
+
+from shared.models import AskRequest, AskResponse
+from shared.config import GOOGLE_API_KEY, GOOGLE_MODEL, TRANSFORMER_MODEL
 
 
+# ----------------------------------------------------
+# 1. CONFIG & SETUP
+# ----------------------------------------------------
 app = FastAPI()
+
 urls = {
-    "legal_node":"http://legal_node:8001/ask",
-    "finance_node":"http://finance_node:8002/ask"
+    "legal_node": "http://legal_node:8001/ask",
+    "finance_node": "http://finance_node:8002/ask",
 }
 
 NODE_TOPICS = {
     "legal_node": "Laws, regulations, compliance, GDPR, contracts, privacy",
-    "finance_node": "Finance, investment, accounting, tax, budgets, revenues"
+    "finance_node": "Finance, investment, accounting, tax, budgets, revenues",
 }
 
-MODEL_NAME = "all-MiniLM-L6-v2" 
-router_model = SentenceTransformer(MODEL_NAME)
+# Load embedding model for routing
+router_model = SentenceTransformer(TRANSFORMER_MODEL)
 
-# Precompute topic embeddings
+# Precompute node embeddings
 node_embeddings = {
     node: router_model.encode(topic, normalize_embeddings=True)
     for node, topic in NODE_TOPICS.items()
 }
 
-# Function to route questions to appropriate nodes
-# This function can be extended to include more complex routing logic as needed.
-def route_question(question: str, top_k: int = 2, threshold: float = 0.2):
+# Initialize Google Generative AI
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel(GOOGLE_MODEL)
+
+
+# ----------------------------------------------------
+# 2. ROUTING LAYER
+# ----------------------------------------------------
+def route_question(question: str, top_k: int = 2, threshold: float = 0.5) -> List[str]:
     """
     Select the most relevant nodes for a query using semantic similarity.
     """
     query_emb = router_model.encode(question, normalize_embeddings=True)
 
     similarities = {
-        node: float(np.dot(query_emb, emb))  # cosine similarity
-        for node, emb in node_embeddings.items()
+        node: float(np.dot(query_emb, emb)) for node, emb in node_embeddings.items()
     }
-    
     print("Similarity scores:", similarities)
 
     # Sort by similarity
@@ -48,6 +58,7 @@ def route_question(question: str, top_k: int = 2, threshold: float = 0.2):
 
     # Filter by threshold
     selected = [node for node, score in ranked_nodes if score >= threshold]
+    print(f"[DEBUG] Selected nodes (threshold={threshold}): {selected}")
 
     # If nothing passes threshold, pick top_k
     if not selected:
@@ -55,7 +66,92 @@ def route_question(question: str, top_k: int = 2, threshold: float = 0.2):
 
     return selected
 
-# Health check endpoint to ensure all nodes are reachable
+
+# ----------------------------------------------------
+# 3. NODE QUERY LAYER
+# ----------------------------------------------------
+def query_nodes(question: str, target_nodes: List[str]) -> List[Dict]:
+    """
+    Query selected nodes and return raw responses.
+    """
+    raw_responses = []
+
+    for node in target_nodes:
+        if node in urls:
+            url = urls[node]
+            print(f"[DEBUG] Sending request to {url} with question: {question}")
+            try:
+                response = requests.post(url, json={"question": question}, timeout=20)
+                print(f"[DEBUG] {node} raw response: {response.text}")
+                data = response.json()
+                data["node_id"] = node
+                raw_responses.append(data)
+            except Exception as e:
+                print(f"[ERROR] Failed to get response from {node}: {e}")
+                raw_responses.append({
+                    "answer": f"Error from {node}: {e}",
+                    "confidence": 0.0,
+                    "sources": [],
+                    "node_id": node,
+                    "status": "error",
+                })
+
+    return raw_responses
+
+
+# ----------------------------------------------------
+# 4. COMBINER LAYER
+# ----------------------------------------------------
+def combine_answers_with_llm(question: str, node_responses: List[Dict], nodes_hit: List[str]) -> AskResponse:
+    """
+    Use LLM to merge node answers into a single coherent answer.
+    Returns AskResponse for API compatibility.
+    """
+    # Build context from node answers
+    context = "\n\n".join(
+        f"From {r['node_id']}:\n{r['answer']}" for r in node_responses
+    )
+
+    # Build dynamic assistant role
+    domains = [NODE_TOPICS.get(node, node) for node in nodes_hit]
+    role_description = " and ".join(domains)
+
+    prompt = f"""
+You are an assistant specialized in {role_description}.
+
+User question:
+{question}
+
+Node answers:
+{context}
+
+Write a single, clear answer that integrates the information.
+If one answer is incomplete, combine them logically.
+Cite relevant principles when possible.
+    """
+
+    llm_response = model.generate_content(prompt)
+    final_answer = llm_response.candidates[0].content.parts[0].text.strip()
+    
+    # Average confidence across nodes - could be refined to weighted average
+    avg_conf = (
+        sum(r.get("confidence", 0) for r in node_responses) / len(node_responses)
+        if node_responses else 0.0
+    )
+
+    return AskResponse(
+        answer=final_answer,
+        confidence=avg_conf,
+        sources=[s for r in node_responses for s in r.get("sources", [])],
+        node_id=nodes_hit[0] if nodes_hit else None,
+        nodes_hit=nodes_hit,
+        status="success",
+    )
+
+
+# ----------------------------------------------------
+# 5. FASTAPI ROUTES
+# ----------------------------------------------------
 @app.get("/healthcheck")
 def check_all_nodes():
     for node_name, url in urls.items():
@@ -69,28 +165,34 @@ def check_all_nodes():
                 time.sleep(2)
         return {"status": f"{node_name} node unavailable"}
 
-# Endpoint to ask questions to all nodes
-@app.post("/ask", response_model=List[AskResponse])
+
+@app.post("/ask", response_model=AskResponse)
 def ask_all_nodes(req: AskRequest = Body(...)):
-    responses = []
+    try:
+        target_nodes = route_question(req.question)
+        print(f"[DEBUG] Routed '{req.question}' → {target_nodes}")
+    except Exception as e:
+        print(f"[ERROR] Routing failed: {e}")
+        return AskResponse(
+            answer=f"Routing failed: {e}",
+            confidence=0.0,
+            sources=[],
+            nodes_hit=[],
+            status="error",
+        )
 
-    for node in route_question(req.question):
-        if node in urls:
-            url = urls[node]
-            print(f"Sending request to {url} with question: {req.question}")
-            try:
-                response = requests.post(url, json=req.dict())
-                data = response.json()
-                data["node_id"] = node  # Add node identifier to response
-                responses.append(data)
-            except Exception as e:
-                print(f"Failed to get response from {node}: {e}")
-                responses.append(AskResponse(
-                    answer=f"Error from {node}: {e}",
-                    confidence=0.0,
-                    sources=[],
-                    node_id=node,
-                    status="error"
-                ))
-    return responses
+    raw_responses = query_nodes(req.question, target_nodes)
 
+    try:
+        combined = combine_answers_with_llm(req.question, raw_responses, target_nodes)
+        print(f"[DEBUG] Combined answer: {combined}")
+        return combined
+    except Exception as e:
+        print(f"[ERROR] Combining answers failed: {e}")
+        return AskResponse(
+            answer=f"Combine failed: {e}",
+            confidence=0.0,
+            sources=[],
+            nodes_hit=[r.get("node_id") for r in raw_responses],
+            status="error",
+        )

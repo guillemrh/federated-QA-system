@@ -3,7 +3,7 @@ from typing import List, Dict, Literal, Optional
 
 class AskRequest(BaseModel):
     question: str
-    metadata: Dict = {}
+    metadata: Optional[Dict] = None
 
 class Source(BaseModel):
     name: str
@@ -14,5 +14,6 @@ class AskResponse(BaseModel):
     answer: str
     confidence: float
     sources: List[Source]
-    node_id: str
-    status: Literal["success", "error"] = "success"
+    node_id: Optional[str]
+    nodes_hit: Optional[List[str]] = None
+    status: Optional[Literal["success", "error"]] = "success"

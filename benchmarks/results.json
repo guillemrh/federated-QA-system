@@ -1,0 +1,174 @@
+[
+  {
+    "id": "legal_001",
+    "domain": "legal",
+    "question": "What does Article 5 of the GDPR outline?",
+    "reference": "Article 5 of the GDPR defines the core principles of personal data processing, including lawfulness, fairness, transparency, purpose limitation, data minimisation, accuracy, storage limitation, and integrity and confidentiality.",
+    "answer": "I am sorry, but the provided context does not contain information about Article 5 of the GDPR. Therefore, I am unable to answer your question.",
+    "nodes_hit": [
+      "legal_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.15,
+    "similarity": 0.5699493885040283,
+    "latency": 1.7095139026641846,
+    "error": null
+  },
+  {
+    "id": "legal_002",
+    "domain": "legal",
+    "question": "When can personal data be transferred outside the EU under GDPR?",
+    "reference": "Transfers are permitted if the recipient country has an adequacy decision (Article 45), appropriate safeguards are in place (Article 46, e.g. SCCs or BCRs), or specific derogations apply (Article 49).",
+    "answer": "Personal data can be transferred outside the EU under the GDPR if the conditions outlined in Chapter V are met, ensuring the level of protection for natural persons guaranteed by the GDPR is not undermined (Article 44). This is permissible under the following circumstances:\n\n1.  **Adequacy Decision:** The European Commission has decided that the third country or international organization ensures an adequate level of protection for personal data (Article 45). Such a transfer does not require specific authorization.\n\n2.  **Derogations (in the absence of an adequacy decision):** The controller and processor must comply with the other provisions of Chapter V. This includes:\n    *   **Consent:** The data subject has unambiguously consented to the transfer.\n    *   **Contractual Necessity:** The transfer is necessary for the performance of a contract with the data subject or for the conclusion or performance of a contract concluded in the interest of the data subject.\n    *   **Important Public Interest/Legal Claims:** The transfer is necessary or legally required on important public interest grounds, or for the establishment, exercise, or defense of legal claims.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.38095238095238093,
+    "similarity": 0.5107810497283936,
+    "latency": 4.425755977630615,
+    "error": null
+  },
+  {
+    "id": "legal_003",
+    "domain": "legal",
+    "question": "What is the difference between a data controller and a data processor under GDPR?",
+    "reference": "The data controller determines the purposes and means of processing personal data, while the data processor acts on behalf of the controller to process the data according to their instructions.",
+    "answer": "Under GDPR, a **data controller** is the entity that determines the purposes and means of processing personal data (from legal_node). A **data processor** processes personal data on behalf of the controller (from legal_node). In essence, the controller decides *why* and *how* personal data is processed, while the processor carries out those instructions.\n\nThe provided context from the legal_node emphasizes the controller's central role in ensuring GDPR compliance, highlighting their key obligations and responsibilities.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.7857142857142857,
+    "similarity": 0.7881461381912231,
+    "latency": 2.6555681228637695,
+    "error": null
+  },
+  {
+    "id": "finance_001",
+    "domain": "finance",
+    "question": "What is IFRS 9?",
+    "reference": "IFRS 9 is an International Financial Reporting Standard that addresses the accounting for financial instruments, including classification, measurement, impairment, and hedge accounting.",
+    "answer": "I am unable to answer the question about IFRS 9, as the provided context in both the legal and financial domains does not contain information about it.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.21428571428571427,
+    "similarity": 0.7947266101837158,
+    "latency": 1.8130180835723877,
+    "error": null
+  },
+  {
+    "id": "finance_002",
+    "domain": "finance",
+    "question": "What is the difference between GAAP and IFRS?",
+    "reference": "GAAP is a set of accounting principles primarily used in the United States, while IFRS is a globally recognized accounting framework used in over 140 countries. Key differences include revenue recognition, inventory accounting, and development costs treatment.",
+    "answer": "I am unable to answer the question about the difference between GAAP and IFRS. The provided information does not contain any information about these accounting standards. The provided legal context pertains to data protection and privacy regulations, specifically the GDPR, which falls outside the scope of accounting standards.",
+    "nodes_hit": [
+      "finance_node",
+      "legal_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.125,
+    "similarity": 0.9002751111984253,
+    "latency": 2.4166247844696045,
+    "error": null
+  },
+  {
+    "id": "finance_003",
+    "domain": "finance",
+    "question": "How do European banks report capital adequacy?",
+    "reference": "European banks must comply with the Basel III framework and EU Capital Requirements Regulation (CRR), reporting minimum capital ratios such as CET1, Tier 1, and Total Capital to ensure financial stability.",
+    "answer": "I am unable to answer your question about how European banks report capital adequacy. The provided context focuses on financial regulations related to budgeting, consumer protection, market regulations, anti-money laundering, and payment services, *not* capital adequacy reporting. The context also includes information about data protection, specifically regarding personal data processing, but it does not contain any information about financial regulations or capital adequacy reporting for banks.",
+    "nodes_hit": [
+      "finance_node",
+      "legal_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.21739130434782608,
+    "similarity": 0.4996735453605652,
+    "latency": 2.846035957336426,
+    "error": null
+  },
+  {
+    "id": "hybrid_001",
+    "domain": "hybrid",
+    "question": "How should a European bank handle GDPR compliance when reporting client investment performance to auditors?",
+    "reference": "Banks must ensure that investment performance data transferred to auditors complies with GDPR principles, including minimisation and lawful basis. If auditors are outside the EU, banks must use safeguards such as SCCs or BCRs.",
+    "answer": "A European bank reporting client investment performance to auditors must comply with the General Data Protection Regulation (GDPR) to protect client personal data. Here's how:\n\n1.  **Identify and Minimize Data:** Identify the personal data involved (name, contact details, investment performance data, and any linked information). Provide auditors with only the minimum, adequate, and relevant data necessary for the audit (Article 6(1)(c) of Directive 95/46/EC, Article 4(1)(c) of Regulation 45/2001). Consider anonymization or pseudonymization where possible.\n\n2.  **Establish a Legal Basis:** A valid legal basis for processing is essential. The bank can use:\n    *   **Legitimate Interests:**  Relying on its legitimate interests for auditing, provided these interests don't override the data subjects' rights (Article 6(1)(f) GDPR).\n    *   **Legal Obligation:** Comply with financial regulations that mandate data sharing with auditors (Article 6(1)(c) GDPR).\n    *   **Consent:** Obtain explicit consent from the client to share their information with auditors (Article 8(2) of the Charter). However, consent may not always be feasible or practical.\n\n3.  **Ensure Transparency:** Inform clients in the bank's privacy notice about data processing for audit purposes, specifying the purposes, data categories, recipients (auditors), and data subjects' rights (Articles 13 and 14 GDPR).\n\n4.  **Implement Security Measures:** Apply appropriate technical and organizational measures to secure client data during transfer and processing, including:\n    *   Encryption (in transit and at rest).\n    *   Access controls, limiting data access to authorized personnel.\n    *   Secure transfer methods like SFTP.\n\n5.  **Use Data Processing Agreements (DPAs):** If auditors process data on the bank's behalf, create a written DPA (Article 28 GDPR) outlining:\n    *   Processing subject matter, duration, nature, and purpose.\n    *   Data types and categories of data subjects.\n    *   Controller and processor obligations and rights.\n\n6.  **Ensure Auditor Compliance:** Verify the auditors' GDPR compliance, including their security measures and adherence to the bank's instructions as per the DPA.\n\n7.  **Record Keeping:** Maintain detailed records of data processing activities, including data transfers to auditors, legal bases, and security measures (Article 30 GDPR).\n\n8.  **International Transfers:** If auditors are outside the European Economic Area (EEA), ensure compliance with Chapter V of GDPR, potentially using Standard Contractual Clauses (SCCs) or binding corporate rules.\n\n9.  **Define the Purpose and Limit Use:** Specify the precise audit purpose for data processing and ensure auditors don't use the information for any other, incompatible purposes (Article 29 Working Party Opinion 3/2013).",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.5454545454545454,
+    "similarity": 0.7004793882369995,
+    "latency": 13.921260118484497,
+    "error": null
+  },
+  {
+    "id": "hybrid_002",
+    "domain": "hybrid",
+    "question": "Can personal data be included in financial regulatory reports under GDPR?",
+    "reference": "Yes, but only the minimum necessary data should be included, with a lawful basis for processing. GDPR requires ensuring confidentiality, minimisation, and secure transmission of data in financial reports.",
+    "answer": "Yes, personal data can be included in financial regulatory reports under GDPR, but this must be done in compliance with GDPR principles and specific provisions. The inclusion is possible, as Article 15 (right of access) does not prohibit it. However, the processing must be lawful and fair, taking into account the purpose of data processing, the categories of data, and potential risks to data subjects' rights.\n\nSpecifically, compliance involves:\n\n*   **Defining a Legal Basis:** Ensure a legitimate reason for processing the data, such as fulfilling legal obligations.\n*   **Transparency:** Comply with the requirements for informing data subjects about the processing, including the right to access their data.\n*   **Minimizing Data:** Take measures to minimize the interference with the right to privacy, for instance, by redacting names of natural persons or deferring publication of information.\n*   **Safeguards:** Implementing appropriate safeguards, especially for sensitive data, like information related to offences and criminal convictions.\n*   **Legislative Measures:** If processing restrictions are involved (as per Article 23.2), ensure these include provisions on purpose, categories of data, scope of restrictions, safeguards, controller details, storage periods, risks to data subjects' rights, and the right to be informed.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.47368421052631576,
+    "similarity": 0.7517536878585815,
+    "latency": 6.493432998657227,
+    "error": null
+  },
+  {
+    "id": "hybrid_003",
+    "domain": "hybrid",
+    "question": "How does GDPR affect anti-money laundering (AML) reporting?",
+    "reference": "AML laws require financial institutions to report suspicious activities, which may involve personal data. GDPR permits such reporting under legal obligations, but institutions must apply data minimisation and ensure proportionality.",
+    "answer": "GDPR significantly impacts anti-money laundering (AML) reporting, primarily concerning the processing and transfer of personal data. Specifically:\n\n*   **International Data Transfers:** GDPR, particularly Article 48, dictates how personal data can be transferred to third countries for AML purposes. Transfers must adhere to GDPR's rules for international data transfers, which may necessitate relying on mechanisms like adequacy decisions, appropriate safeguards, or derogations.\n*   **Data Processing Principles:** AML reporting must comply with key GDPR principles, including:\n    *   **Data Minimization:** Only necessary and relevant data should be collected for AML purposes.\n    *   **Purpose Limitation:** Data collected for AML should only be used for that specified purpose.\n    *   **Legal Basis for Processing:** AML data processing requires a clear legal basis under the law.\n    *   **Data Security:** Robust technical and organizational measures must be implemented to protect personal data in AML systems.\n    *   **Transparency and Individual Rights:** Individuals whose data is used in AML reporting have rights concerning their data and should be informed of restrictions and have recourse.\n    *   **Privacy by Design:** Data protection and privacy should be integrated from the design phase of new systems and procedures.\n\nIn essence, GDPR necessitates that AML reporting is conducted lawfully, fairly, with minimal data collection, with a strong emphasis on data security, and with respect for individual rights.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.0,
+    "overlap": 0.375,
+    "similarity": 0.7521281242370605,
+    "latency": 6.887695550918579,
+    "error": null
+  },
+  {
+    "id": "hybrid_004",
+    "domain": "hybrid",
+    "question": "What are the GDPR implications of using cloud services for financial audits?",
+    "reference": "Banks must ensure that cloud providers meet GDPR requirements, including data processing agreements, security measures, and lawful data transfers if servers are outside the EU.",
+    "answer": "Using cloud services for financial audits has significant GDPR implications. The financial auditor (controller) must ensure compliance, regardless of where the data is stored or processed. Key considerations include:\n\n*   **Data Protection Requirements:** Any processing must adhere to GDPR principles, including purpose limitation and data minimization. (Article 5) Any legislative measure related to data processing should include specific provisions as mentioned in Article 23.2.\n*   **Data Transfers:** If the cloud provider is located outside the EU, appropriate safeguards are essential, such as Standard Contractual Clauses, Binding Corporate Rules (BCRs), or an adequacy decision.\n*   **Controller and Processor Responsibilities:** The auditor (controller) is responsible for ensuring the cloud service provider (processor) implements appropriate technical and organizational measures to protect personal data. (Article 28)\n*   **Data Subject Rights:** Individuals whose data is audited retain their rights, including the right to be informed.\n*   **Supervisory Authority:** The supervisory authority oversees international data transfers and compliance.",
+    "nodes_hit": [
+      "legal_node",
+      "finance_node"
+    ],
+    "faithfulness": 0.2,
+    "overlap": 0.631578947368421,
+    "similarity": 0.7307856678962708,
+    "latency": 6.553211688995361,
+    "error": null
+  },
+  {
+    "id": "hybrid_005",
+    "domain": "hybrid",
+    "question": "Can investment firms use client personal data for performance benchmarking under GDPR?",
+    "reference": "Yes, if they have a lawful basis such as contractual necessity or legitimate interest. However, firms must anonymise data where possible and inform clients about the processing.",
+    "answer": "",
+    "nodes_hit": [],
+    "faithfulness": 0.0,
+    "overlap": 0.0,
+    "similarity": 0.0,
+    "latency": null,
+    "error": "Expecting value: line 1 column 1 (char 0)"
+  }
+]
