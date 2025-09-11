@@ -20,52 +20,59 @@ urls = {
     "finance_node": "http://finance_node:8002/ask",
 }
 
+# Initialize Google Generative AI
+genai.configure(api_key=GOOGLE_API_KEY)
+model = genai.GenerativeModel(GOOGLE_MODEL)
+model2 = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+
 NODE_TOPICS = {
-    "legal_node": "Laws, regulations, compliance, GDPR, contracts, privacy",
-    "finance_node": "Finance, investment, accounting, tax, budgets, revenues",
+    "legal_node": "Laws, regulations, compliance, GDPR, contracts, privacy, data transfer, third-country transfers, binding corporate rules, standard contractual clauses, SCCs, adequacy decisions, data portability, data subject rights",
+    "finance_node": "Finance, investment, accounting, tax, budgets, revenues, EU financial regulation, ISO20022, payments, securities, financial messaging, payment messages, SEPA, SWIFT, financial instruments, capital markets",
 }
 
 # Load embedding model for routing
 router_model = SentenceTransformer(TRANSFORMER_MODEL)
 
-# Precompute node embeddings
-node_embeddings = {
-    node: router_model.encode(topic, normalize_embeddings=True)
-    for node, topic in NODE_TOPICS.items()
-}
-
-# Initialize Google Generative AI
-genai.configure(api_key=GOOGLE_API_KEY)
-model = genai.GenerativeModel(GOOGLE_MODEL)
-
-
 # ----------------------------------------------------
 # 2. ROUTING LAYER
 # ----------------------------------------------------
-def route_question(question: str, top_k: int = 2, threshold: float = 0.5) -> List[str]:
+def route_question(question: str) -> List[str]:
     """
-    Select the most relevant nodes for a query using semantic similarity.
+    Use LLM to classify question into relevant nodes.
     """
-    query_emb = router_model.encode(question, normalize_embeddings=True)
+    allowed_nodes = ", ".join(NODE_TOPICS.keys())
+    topics_str = "\n".join([f"- {k}: {v}" for k, v in NODE_TOPICS.items()])
 
-    similarities = {
-        node: float(np.dot(query_emb, emb)) for node, emb in node_embeddings.items()
-    }
-    print("Similarity scores:", similarities)
+    prompt = f"""
+    You are an expert at classifying questions into specialized nodes.
 
-    # Sort by similarity
-    ranked_nodes = sorted(similarities.items(), key=lambda x: x[1], reverse=True)
+    Here are the nodes and their topics:
+    {topics_str}
 
-    # Filter by threshold
-    selected = [node for node, score in ranked_nodes if score >= threshold]
-    print(f"[DEBUG] Selected nodes (threshold={threshold}): {selected}")
+    Given the user question below, return ONLY the node keys from this list:
+    {allowed_nodes}
 
-    # If nothing passes threshold, pick top_k
-    if not selected:
-        selected = [node for node, _ in ranked_nodes[:top_k]]
+    Format: comma-separated list of node keys, without explanation.
 
-    return selected
+    User question:
+    {question}
+    """
 
+    try:
+        llm_response = model2.generate_content(prompt)
+        raw_response = llm_response.text.strip().lower()
+        llm_nodes = [node.strip() for node in raw_response.split(",") if node.strip() in NODE_TOPICS.keys()]
+
+        # Fallback: if the LLM didn’t match any valid node, default to all
+        if not llm_nodes:
+            llm_nodes = list(NODE_TOPICS.keys())
+
+    except Exception as e:
+        print(f"LLM routing failed: {e}")
+        llm_nodes = list(NODE_TOPICS.keys())
+
+    print(f"[DEBUG] LLM routing response: {llm_nodes}")
+    return llm_nodes
 
 # ----------------------------------------------------
 # 3. NODE QUERY LAYER

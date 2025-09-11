@@ -31,7 +31,10 @@ Context:
 Question:
 {question}
 
-Answer in clear, accurate financial language."""
+Answer in clear, accurate financial language.
+If you don't know the answer, say "I don't know", but try to answer based on the context.
+If the answer is not in the context, say "The provided context does not contain the answer to your question.
+"""
 
     try: 
         # Generate the response

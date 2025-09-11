@@ -49,7 +49,7 @@ class Retriever:
         if self.model is None:
             raise ValueError("Model not loaded. Call load_model() first.")
         
-        texts = [chunk["text"] for chunk in self.text_chunks] # Extract text from chunks (list of dicts with "text" key)
+        texts = [chunk["text"] for chunk in self.text_chunks] # Extract text from chunks 
         embeddings = self.model.encode(texts).astype('float32')
         self.index = faiss.IndexFlatL2(embeddings.shape[1])
         self.index.add(embeddings)
