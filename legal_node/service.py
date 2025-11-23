@@ -1,5 +1,5 @@
 from .retriever import retrieve_relevant_chunks
-from shared.models import AskResponse, Source
+from shared.models import AskResponse, Source, NodeResult
 import os
 from shared.config import GOOGLE_API_KEY, GOOGLE_MODEL
 import google.generativeai as genai
@@ -13,14 +13,16 @@ def answer_question(question: str) -> AskResponse:
     Use the retriever to get relevant chunks, pass them to the LLM,
     and return a structured AskResponse.
     """
-    # Retrieve context
-    chunks = retrieve_relevant_chunks(question)
+    # Retrieve context + embeddings
+    retrieval = retrieve_relevant_chunks(question)
+    query_embedding = retrieval["query_embedding"]
+    chunks = retrieval["chunks"]
     
     # Build context string from chunk texts
     context = "\n\n".join(chunk["text"] for chunk in chunks)
     
-    print("Chunks returned:", chunks)
-    print("Type of chunks[0]:", type(chunks[0]))
+    # Build chunk embeddings list from retrieved chunks
+    chunk_embeddings = [chunk["embedding"] for chunk in chunks]
 
     # Build prompt for the LLM
     prompt = f"""You are a legal assistant. Use the following legal context to answer the user's question.
@@ -54,10 +56,18 @@ If the answer is not in the context, say "The provided context does not contain 
         for chunk in chunks
     ]
     
-    return AskResponse(
-    answer=answer_text,
-    confidence=0.9,
-    sources=sources,
-    node_id="legal_node",
-    status="success"
+    # Create AskResponse (public API contract)
+    ask_response = AskResponse(
+        answer=answer_text,
+        confidence=0.9,
+        sources=sources,
+        node_id="legal_node",
+        status="success"
+    )
+
+    # Return NodeResult (internal structure)
+    return NodeResult(
+        response=ask_response,
+        query_embedding=query_embedding,
+        chunk_embeddings=chunk_embeddings
     )

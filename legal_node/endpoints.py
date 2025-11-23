@@ -8,9 +8,10 @@ router = APIRouter(
     responses={200: {"description": "Has your question been answered?"}},
 )
 
-@router.post("/", response_model=AskResponse, summary="Given a question, get a response")
+@router.post("/", response_model=AskResponse)
 async def answer_legal_question(req: AskRequest):
-    return answer_question(req.question)
+    node_result = answer_question(req.question)
+    return node_result.response  # only expose AskResponse
 
 @router.get("/healthcheck")
 def healthcheck():

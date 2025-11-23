@@ -23,7 +23,7 @@ urls = {
 # Initialize Google Generative AI
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel(GOOGLE_MODEL)
-model2 = genai.GenerativeModel("models/gemini-2.0-flash-lite")
+model2 = genai.GenerativeModel("models/gemini-2.5-flash-lite")
 
 NODE_TOPICS = {
     "legal_node": "Laws, regulations, compliance, GDPR, contracts, privacy, data transfer, third-country transfers, binding corporate rules, standard contractual clauses, SCCs, adequacy decisions, data portability, data subject rights",
@@ -91,16 +91,24 @@ def query_nodes(question: str, target_nodes: List[str]) -> List[Dict]:
                 response = requests.post(url, json={"question": question}, timeout=20)
                 print(f"[DEBUG] {node} raw response: {response.text}")
                 data = response.json()
-                data["node_id"] = node
-                raw_responses.append(data)
+                node_result = {
+                    "response": data["response"],  # AskResponse dict
+                    "query_embedding": data.get("query_embedding", []),
+                    "chunk_embeddings": data.get("chunk_embeddings", []),
+                }
+                raw_responses.append(node_result)
             except Exception as e:
                 print(f"[ERROR] Failed to get response from {node}: {e}")
                 raw_responses.append({
-                    "answer": f"Error from {node}: {e}",
-                    "confidence": 0.0,
-                    "sources": [],
-                    "node_id": node,
-                    "status": "error",
+                    "response": {
+                        "answer": f"Error from {node}: {e}",
+                        "confidence": 0.0,
+                        "sources": [],
+                        "node_id": node,
+                        "status": "error",
+                    },
+                    "query_embedding": [],
+                    "chunk_embeddings": []
                 })
 
     return raw_responses
@@ -116,7 +124,8 @@ def combine_answers_with_llm(question: str, node_responses: List[Dict], nodes_hi
     """
     # Build context from node answers
     context = "\n\n".join(
-        f"From {r['node_id']}:\n{r['answer']}" for r in node_responses
+        f"From {r['response']['node_id']}:\n{r['response']['answer']}"
+        for r in node_responses
     )
 
     # Build dynamic assistant role
@@ -142,7 +151,7 @@ Cite relevant principles when possible.
     
     # Average confidence across nodes - could be refined to weighted average
     avg_conf = (
-        sum(r.get("confidence", 0) for r in node_responses) / len(node_responses)
+        sum(r["response"].get("confidence", 0) for r in node_responses) / len(node_responses)
         if node_responses else 0.0
     )
 
@@ -173,7 +182,7 @@ def check_all_nodes():
         return {"status": f"{node_name} node unavailable"}
 
 
-@app.post("/ask", response_model=AskResponse)
+@app.post("/ask")
 def ask_all_nodes(req: AskRequest = Body(...)):
     try:
         target_nodes = route_question(req.question)
@@ -193,7 +202,10 @@ def ask_all_nodes(req: AskRequest = Body(...)):
     try:
         combined = combine_answers_with_llm(req.question, raw_responses, target_nodes)
         print(f"[DEBUG] Combined answer: {combined}")
-        return combined
+        return {
+            **combined.dict(), # Unpack AskResponse fields
+            "raw_responses": raw_responses # Embeddings for analysis
+        }
     except Exception as e:
         print(f"[ERROR] Combining answers failed: {e}")
         return AskResponse(

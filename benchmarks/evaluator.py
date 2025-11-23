@@ -3,6 +3,8 @@ from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer, util
 from shared.config import ORCHESTRATOR_URL, TRANSFORMER_MODEL
 from rapidfuzz import fuzz
+import numpy as np
+from tabulate import tabulate
 
 # ----------------------------------------------------
 # 1. LOADING DATA
@@ -43,66 +45,10 @@ def ask_orchestrator(question):
     return response.json(), latency
 
 # ----------------------------------------------------
-# 3. METRICS - faithfulness, overlap, similarity
+# 3. METRICS - overlap, similarity
 # ----------------------------------------------------
 
-# Simple sentence/bullet splitter
-def _split_units(text: str) -> List[str]:
-    # split on end-of-sentence punctuation OR bullets/newlines/dashes
-    parts = re.split(r'(?<=[\.\?\!])\s+|[\n\r]+|(?:^\s*[-•]\s+)', text)
-    units = [p.strip() for p in parts if p and len(p.strip()) >= 5]
-    return units
-
-def faithfulness(answer: str, sources: List[Dict[str, Any]], threshold: float = 0.60) -> float:
-    """
-    Fraction of answer units (sentences/bullets) that are semantically supported by any source snippet (above the threshold).
-    Uses SBERT cosine similarity in batch for speed.
-    Returns a simple faithfulness score [0,1]
-    """
-    if not answer or not sources:
-        return 0.0
-    
-    units = _split_units(answer)
-    if not units:
-        return 0.0
-
-    source_texts = [src.get("snippet","") for src in sources if src.get("snippet")]
-    if not source_texts:
-        return 0.0
-    print(f"snippets: {source_texts}")
-    # Batch-encode (faster + consistent)
-    unit_emb = model.encode(units, convert_to_tensor=True)
-    src_emb = model.encode(source_texts, convert_to_tensor=True)
-
-    sim_mat = util.cos_sim(unit_emb, src_emb)  # shape [num_units, num_sources]
-    # Count units that have at least one supporting source above threshold
-    supported = (sim_mat.max(dim=1).values >= threshold).sum().item()
-
-    return supported / len(units)
-
-_STOPWORDS = {
-    "the","a","an","and","or","of","to","in","for","on","with","by","as","at",
-    "is","are","was","were","be","being","been","that","this","it","its","from",
-    "their","there","then","than","but","if","into","about","over","under"
-}
-
-def _tokens(text: str) -> set:
-    """
-    Simple regex tokenization, removes light stopwords.
-    """
-    toks = re.findall(r"[a-z0-9]+", text.lower())
-    return {t for t in toks if t not in _STOPWORDS}
-
-def keyword_overlap(a: str, b: str) -> float:
-    """
-    What fraction of reference keywords appear in the answer
-    """
-    A, B = _tokens(a), _tokens(b)
-    if not A:
-        return 0.0
-    return len(A & B) / len(A)
-
-def semantic_similiarity(answer: str, ref: str) -> float:
+def semantic_similarity(answer: str, ref: str) -> float:
     """
     Semantic similarity (cosine) between answer and reference
     """
@@ -113,6 +59,24 @@ def semantic_similiarity(answer: str, ref: str) -> float:
     else:
         sim = 0.0
     return sim
+
+def retrieval_metrics(q_emb, chunk_embs, relevant_ids, retrieved_ids, k=5):
+    """
+    Compute precision@k and recall@k for retrieval.
+    relevant_ids = ground-truth doc IDs (from dataset)
+    retrieved_ids = actual top-k doc IDs from system
+    """
+    if not relevant_ids:
+        return 0.0, 0.0
+
+    retrieved_topk = set(retrieved_ids[:k])
+    relevant = set(relevant_ids)
+
+    hits = len(retrieved_topk & relevant)
+    precision = hits / min(k, len(retrieved_topk))
+    recall = hits / len(relevant)
+    return precision, recall
+
 
 # ----------------------------------------------------
 # 4. EVALUATION LOOP
@@ -127,12 +91,28 @@ def evaluate(dataset_path="benchmarks/dataset.json", out_path="benchmarks/result
 
     for item in data:
         q = item["question"]
-        ref = item["answer"]            
+        ref = item["answer"]
         qid = item.get("id")
         domain = item.get("domain")
+        relevant_ids = item.get("relevant_chunks", [])  # ground truth
 
         try:
             output, latency = ask_orchestrator(q)
+            
+            answer = output.get("answer", "")
+
+            # unpack embeddings
+            node_results = output.get("raw_responses", [])
+            q_emb = None
+            chunk_embs = []
+
+            for node in node_results:
+                if not q_emb:  # take query embedding once
+                    q_emb = node.get("query_embedding", [])
+                chunk_embs.extend(node.get("chunk_embeddings", []))
+                
+            retrieved_ids = [s.get("id") for s in output.get("sources", []) if s.get("id")]
+    
         except Exception as e:
             results.append({
                 "id": qid,
@@ -140,26 +120,17 @@ def evaluate(dataset_path="benchmarks/dataset.json", out_path="benchmarks/result
                 "question": q,
                 "reference": ref,
                 "answer": "",
-                "nodes_hit": [],
-                "faithfulness": 0.0,   
-                "overlap": 0.0,
                 "similarity": 0.0,
+                "precision@5": 0.0,
+                "recall@5": 0.0,
                 "latency": None,
                 "error": str(e)
             })
             continue
-        
-        answer = output.get("answer", "")
-        sources = output.get("sources", [])
-        nodes_hit = output.get("nodes_hit", [])
-        
-        print("Chosen answer:", answer)
-        print("Nodes hit:", nodes_hit)
-        
+
         # Metrics
-        faith = faithfulness(answer, sources)
-        overlap = keyword_overlap(ref, answer)
-        sim = semantic_similiarity(answer, ref)
+        sim = semantic_similarity(answer, ref)
+        precision, recall = retrieval_metrics(q_emb, chunk_embs, relevant_ids, retrieved_ids, k=5)
 
         results.append({
             "id": qid,
@@ -167,51 +138,27 @@ def evaluate(dataset_path="benchmarks/dataset.json", out_path="benchmarks/result
             "question": q,
             "reference": ref,
             "answer": answer,
-            "nodes_hit": nodes_hit,
-            "faithfulness": faith,
-            "overlap": overlap,
             "similarity": sim,
+            "precision@5": precision,
+            "recall@5": recall,
             "latency": latency,
             "error": None
         })
+    # Table preview
+    rows = [
+        [r["id"], r["domain"], r["similarity"], r["precision@5"], r["recall@5"], r["latency"], r["error"]]
+        for r in results
+    ]
+    print("\nResults table:")
+    print(tabulate(rows, headers=["ID", "Domain", "Sim", "P@5", "R@5", "Latency (ms)", "Error"], tablefmt="github"))
 
     # Save per-example results
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
-    # Print quick summary (overall + by domain)
-    def avg(vals): 
-        vals = [v for v in vals if isinstance(v, (int, float))]
-        return sum(vals) / len(vals) if vals else 0.0
-
-    overall_faithfulness = avg([r["faithfulness"] for r in results])
-    overall_sim = avg([r["similarity"] for r in results])
-    overall_overlap = avg([r["overlap"] for r in results])
-    overall_latency = avg([r["latency"] for r in results if r["latency"] is not None])
-
-    print("\n=== Overall ===")
-    print(f"Items: {len(results)}")
-    print(f"Faithfulness: {overall_faithfulness:.3f}")
-    print(f"Overlap:     {overall_overlap:.3f}")
-    print(f"Similarity:  {overall_sim:.3f}")
-    print(f"Latency(s):  {overall_latency:.3f}")
-
-    # Domain splits
-    by_domain: Dict[str, List[Dict[str, Any]]] = {}
-    for r in results:
-        by_domain.setdefault(r.get("domain", "unknown"), []).append(r)
-
-    for dom, rs in by_domain.items():
-        d_faith = avg([x["faithfulness"] for x in rs])
-        d_sim = avg([x["similarity"] for x in rs])
-        d_overlap = avg([x["overlap"] for x in rs])
-        d_lat = avg([x["latency"] for x in rs if x["latency"] is not None])
-        print(f"\n=== {dom} ===")
-        print(f"Items:     {len(rs)}")
-        print(f"Faithfulness {d_faith:.3f} | Overlap {d_overlap:.3f} | Sim {d_sim:.3f} | Lat {d_lat:.3f}")
-
     print(f"\nSaved detailed results → {out_path}")
 
 if __name__ == "__main__":
     evaluate()
+    
